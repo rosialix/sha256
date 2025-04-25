@@ -1,0 +1,53 @@
+define([
+    'jquery'
+], function ($) {
+    'use strict';
+
+    return {
+        init: function () {
+            var self = this
+
+      // Ejemplo de uso (en el navegador)
+      const provincia = "Aragua";
+      self.hashearProvinciaEnNavegador(provincia)
+        .then(hash => console.log("Hash de la provincia:", hash));
+      },
+
+// Añadir js-sha256 como dependencia
+ hashearProvinciaEnNavegador: async function(provincia) {
+    var self = this
+    // Primero intentar con Web Crypto API
+    if (window.crypto?.subtle?.digest) {
+      try {
+        const utf8Encode = new TextEncoder().encode(provincia);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', utf8Encode);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      } catch (error) {
+        console.warn("Error con Web Crypto API, usando polyfill", error);
+      }
+    }
+
+    // Fallback con polyfill
+    return self.hashearProvinciaFallback(provincia);
+  },
+
+  // Función de fallback
+  hashearProvinciaFallback: function(provincia) {
+    // Implementación con js-sha256
+    if (typeof sha256 === 'function') {
+      return sha256(provincia);
+    }
+
+    // Implementación mínima si no hay polyfill
+    let hash = 0;
+    for (let i = 0; i < provincia.length; i++) {
+      const char = provincia.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0; // Convertir a 32bit integer
+    }
+    return hash.toString(16);
+  }
+
+    };
+});
